@@ -1,8 +1,8 @@
 Go See Art SF 
 
-Auto-updating feed of current art exhibitions across select San Francisco museums"
+Auto-updating feed of current art exhibitions across select San Francisco museums
 
-
+- vibe coded with Claude
 - Aggregates current and upcoming art exhibitions across 9 San Francisco museums into a single browsable feed,
 - Custom scrapers per museum using fetch + node-html-parser, handling varied site structures including WordPress, Wix, and custom CMSes,
 - Weekly automated scraping via GitHub Actions cron; scrapers are idempotent and upsert by canonical exhibition URL,
