@@ -5,14 +5,17 @@ import { sql } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 
 export default async function AboutPage() {
-  const rows = await db.select().from(museums).orderBy(sql`lower(${museums.name})`);
+  const rows = await db
+    .select()
+    .from(museums)
+    .orderBy(sql`lower(${museums.name})`);
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-semibold tracking-tight mb-2">About</h1>
       <p className="text-muted mb-10">
         Go see art sf tracks current and upcoming exhibitions at select San
-        Francisco museums and galleries, all in one place.
+        Francisco museums, all in one place.
       </p>
 
       <h2 className="text-xs uppercase tracking-widest text-muted mb-4">
