@@ -1,3 +1,15 @@
+Go See Art SF 
+
+Auto-updating feed of current art exhibitions across select San Francisco museums"
+
+
+- Aggregates current and upcoming art exhibitions across 9 San Francisco museums into a single browsable feed,
+- Custom scrapers per museum using fetch + node-html-parser, handling varied site structures including WordPress, Wix, and custom CMSes,
+- Weekly automated scraping via GitHub Actions cron; scrapers are idempotent and upsert by canonical exhibition URL,
+- Card grid homepage ordered by closing date; detail pages include full image with credit, date range, description, and link to museum,
+- Built with Next.js App Router, React, TypeScript, Tailwind CSS v4, Drizzle ORM, and Neon Postgres,
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
