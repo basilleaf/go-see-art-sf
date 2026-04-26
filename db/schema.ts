@@ -1,4 +1,5 @@
 import { pgTable, serial, text, date, integer, timestamp, unique } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 export const museums = pgTable("museums", {
   id: serial("id").primaryKey(),
@@ -22,6 +23,14 @@ export const exhibitions = pgTable("exhibitions", {
   link: text("link"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => [unique().on(t.link)]);
+
+export const museumsRelations = relations(museums, ({ many }) => ({
+  exhibitions: many(exhibitions),
+}));
+
+export const exhibitionsRelations = relations(exhibitions, ({ one }) => ({
+  museum: one(museums, { fields: [exhibitions.museumId], references: [museums.id] }),
+}));
 
 export type Museum = typeof museums.$inferSelect;
 export type NewMuseum = typeof museums.$inferInsert;
