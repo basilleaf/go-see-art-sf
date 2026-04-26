@@ -1,18 +1,16 @@
-import fs from "fs";
 import path from "path";
+import { put } from "@vercel/blob";
 import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-
-const PUBLIC_DIR = path.join(process.cwd(), "public");
 
 const BASE_URL = "https://www.moadsf.org";
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 };
 
-async function downloadImage(
+async function uploadImage(
   remoteUrl: string,
   museumDir: string,
   slug: string
@@ -26,20 +24,13 @@ async function downloadImage(
     extFromUrl ||
     (contentType.includes("png") ? ".png" : contentType.includes("webp") ? ".webp" : ".jpg");
 
-  const dir = path.join(PUBLIC_DIR, museumDir);
-  fs.mkdirSync(dir, { recursive: true });
-
-  const filename = `${slug}${ext}`;
-  const dest = path.join(dir, filename);
-
-  if (fs.existsSync(dest)) {
-    return `/${museumDir}/${filename}`;
-  }
-
-  const buffer = Buffer.from(await res.arrayBuffer());
-  fs.writeFileSync(dest, buffer);
-
-  return `/${museumDir}/${filename}`;
+  const blob = await put(`${museumDir}/${slug}${ext}`, await res.arrayBuffer(), {
+    access: "public",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: contentType || "image/jpeg",
+  });
+  return blob.url;
 }
 
 async function fetchHtml(url: string) {
@@ -97,9 +88,9 @@ async function scrapeExhibitionDetail(exhibitionPath: string, museumDir: string)
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
   const imageCredit = heroImg?.getAttribute("alt")?.trim() || null;
   const image = remoteImageUrl
-    ? await downloadImage(remoteImageUrl, museumDir, slug)
+    ? await uploadImage(remoteImageUrl, museumDir, slug)
     : null;
-  if (image) console.log(`    Saved image → ${image}`);
+  if (image) console.log(`    Uploaded image → ${image}`);
 
   // Description (paragraphs in section-event-top, skip empties and zero-width joiners)
   const ZWJ = "‍";

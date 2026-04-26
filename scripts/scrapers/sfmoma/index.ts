@@ -1,5 +1,5 @@
-import fs from "fs";
 import path from "path";
+import { put } from "@vercel/blob";
 import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -7,7 +7,6 @@ import { museums, exhibitions } from "@/db/schema";
 
 const BASE_URL = "https://www.sfmoma.org";
 const MUSEUM_DIR = "sfmoma";
-const PUBLIC_DIR = path.join(process.cwd(), "public");
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 };
@@ -49,10 +48,7 @@ function parseDateRange(raw: string): { startDate: string | null; endDate: strin
   return { startDate: parseDate(text), endDate: null };
 }
 
-async function downloadImage(
-  remoteUrl: string,
-  slug: string
-): Promise<string | null> {
+async function uploadImage(remoteUrl: string, slug: string): Promise<string | null> {
   const res = await fetch(remoteUrl, { headers: HEADERS });
   if (!res.ok) return null;
 
@@ -62,17 +58,13 @@ async function downloadImage(
     extFromUrl ||
     (contentType.includes("png") ? ".png" : contentType.includes("webp") ? ".webp" : ".jpg");
 
-  const dir = path.join(PUBLIC_DIR, MUSEUM_DIR);
-  fs.mkdirSync(dir, { recursive: true });
-
-  const filename = `${slug}${ext}`;
-  const dest = path.join(dir, filename);
-
-  if (fs.existsSync(dest)) return `/${MUSEUM_DIR}/${filename}`;
-
-  const buffer = Buffer.from(await res.arrayBuffer());
-  fs.writeFileSync(dest, buffer);
-  return `/${MUSEUM_DIR}/${filename}`;
+  const blob = await put(`${MUSEUM_DIR}/${slug}${ext}`, await res.arrayBuffer(), {
+    access: "public",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: contentType || "image/jpeg",
+  });
+  return blob.url;
 }
 
 async function scrapeExhibitionDetail(href: string) {
@@ -98,8 +90,8 @@ async function scrapeExhibitionDetail(href: string) {
     cloudfrontImgs.find((img) => img.closest("figure") !== null) ??
     cloudfrontImgs[0] ?? null;
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
-  const image = remoteImageUrl ? await downloadImage(remoteImageUrl, slug) : null;
-  if (image) console.log(`    Saved image → ${image}`);
+  const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
+  if (image) console.log(`    Uploaded image → ${image}`);
 
   // Image credit — prefer the explicit "Header image:" paragraph
   const headerCreditEl = root
