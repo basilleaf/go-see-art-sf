@@ -9,7 +9,16 @@ Auto-updating feed of current art exhibitions across select San Francisco museum
 - Card grid homepage ordered by closing date; detail pages include full image with credit, date range, description, and link to museum,
 - Built with Next.js App Router, React, TypeScript, Tailwind CSS v4, Drizzle ORM, and Neon Postgres,
 
+https://go-see-art-sf-11o7.vercel.app/
 
+<img width="3420" height="2140" alt="image" src="https://github.com/user-attachments/assets/91c7711f-57ef-486c-899e-6f10a27d7631" />
+
+detail page: 
+
+<img width="3420" height="2132" alt="image" src="https://github.com/user-attachments/assets/0f361d6d-4adf-476c-8bdc-6eb407d6f49f" />
+
+
+---- 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
