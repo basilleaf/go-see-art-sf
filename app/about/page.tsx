@@ -2,6 +2,8 @@ import { db } from "@/db";
 import { museums } from "@/db/schema";
 import { sql } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export default async function AboutPage() {
   const rows = await db.select().from(museums).orderBy(sql`lower(${museums.name})`);
 

@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
+
+export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
