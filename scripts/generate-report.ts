@@ -14,8 +14,10 @@ function esc(s: string | null | undefined): string {
 }
 
 async function main() {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 8);
+  const runStartRaw = fs.existsSync("/tmp/scraper-run-start.txt")
+    ? fs.readFileSync("/tmp/scraper-run-start.txt", "utf8").trim()
+    : null;
+  const cutoff = runStartRaw ? new Date(runStartRaw) : (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })();
 
   // New exhibitions added this run (created in the last 8 days)
   const newExhibitions = await db

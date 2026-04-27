@@ -87,8 +87,14 @@ export async function summarizeIfMissing(
     where: eq(exhibitions.link, link),
     columns: { description: true },
   });
-  if (existing?.description) return null;
-  return summarizeDescription(ctx);
+  if (existing?.description) {
+    console.log(`    [summarize] skipped — description already exists`);
+    return null;
+  }
+  console.log(`    [summarize] calling Claude for description...`);
+  const result = await summarizeDescription(ctx);
+  console.log(`    [summarize] ${result ? "got description ✓" : "WARNING: Claude returned null"}`);
+  return result;
 }
 
 // Only fills a field if the existing row has null — never overwrites.

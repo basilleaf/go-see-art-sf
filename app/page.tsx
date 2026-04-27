@@ -39,7 +39,11 @@ export default async function Home() {
     );
 
   const rows = sortExhibitions(
-    rawRows.map((r) => ({ ...r, startDate: r.exhibitions.startDate, endDate: r.exhibitions.endDate })),
+    rawRows.map((r) => ({
+      ...r,
+      startDate: r.exhibitions.startDate,
+      endDate: r.exhibitions.endDate,
+    })),
     today,
   );
 
