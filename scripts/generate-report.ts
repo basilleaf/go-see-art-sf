@@ -69,11 +69,11 @@ async function main() {
     ? fs.readFileSync(LOGS_PATH, "utf8")
     : "No output captured.";
 
-  // Extract error/warning lines for prominent display
+  // Extract error/warning lines from the FULL log (before any truncation)
   const errorLines = rawLogs
     .split("\n")
     .filter((l) => /\b(error|warning|failed)\b/i.test(l) && !/^\s*[→✓]/.test(l))
-    .slice(0, 30);
+    .slice(0, 50);
 
   const hasNew = newExhibitions.length > 0;
   const hasMissing = missingContent.length > 0;
