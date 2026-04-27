@@ -23,3 +23,30 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - run: npx tsx scripts/run-all-scrapers.ts 2>&1 | tee /tmp/scraper-output.txt
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Send summary email
+        if: always()
+        run: |
+          node -e "
+          const fs = require('fs');
+          const { Resend } = require('resend');
+          const r = new Resend(process.env.RESEND_API_KEY);
+          const logs = fs.existsSync('/tmp/scraper-output.txt')
+            ? fs.readFileSync('/tmp/scraper-output.txt', 'utf8')
+            : 'No output captured.';
+          r.emails.send({
+            from: 'Go See Art SF <hello@goseeartsf.com>',
+            to: 'lballard.cat@gmail.com',
+            subject: 'Scraper run: ' + process.env.JOB_STATUS,
+            text: logs,
+          }).then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+          "
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          JOB_STATUS: ${{ job.status }}
