@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
 
 const BASE_URL = "https://www.famsf.org";
 const LIST_URL = `${BASE_URL}/exhibitions?where=de-young`;
@@ -164,7 +164,8 @@ async function main() {
       const artist = rawData.artist ?? inferredArtist;
       const data = { ...rawData, description, artist, imageCredit: rawData.imageCredit ?? artist };
       console.log(`  → "${data.title}" | ${data.startDate ?? "?"} – ${data.endDate ?? "?"}`);
-      await db.insert(exhibitions).values({ ...data, museumId })
+      const slug = await slugForExhibitionUpsert(data.link!, data.title, museum.name);
+      await db.insert(exhibitions).values({ ...data, museumId, slug })
         .onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${href}:`, err);

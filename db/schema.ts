@@ -11,6 +11,8 @@ export const museums = pgTable("museums", {
 export const exhibitions = pgTable("exhibitions", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
+  /** URL path segment: unique, typically derived from title + museum name. */
+  slug: text("slug").notNull().unique(),
   description: text("description"),
   image: text("image"),
   imageCredit: text("image_credit"),

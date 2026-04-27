@@ -4,19 +4,19 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 
 export default function SwipeNav({
-  prevId,
-  nextId,
+  prevSlug,
+  nextSlug,
   children,
 }: {
-  prevId: number | null;
-  nextId: number | null;
+  prevSlug: string | null;
+  nextSlug: string | null;
   children: ReactNode;
 }) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!prevId && !nextId) return;
+    if (!prevSlug && !nextSlug) return;
 
     const el = containerRef.current;
     if (!el) return;
@@ -36,10 +36,10 @@ export default function SwipeNav({
       const h = new Hammer(el);
       h.get("swipe").set({ direction: Hammer.DIRECTION_HORIZONTAL });
       h.on("swipeleft", () => {
-        if (nextId) router.push(`/exhibitions/${nextId}`);
+        if (nextSlug) router.push(`/exhibitions/${nextSlug}`);
       });
       h.on("swiperight", () => {
-        if (prevId) router.push(`/exhibitions/${prevId}`);
+        if (prevSlug) router.push(`/exhibitions/${prevSlug}`);
       });
       hammer = h;
     };
@@ -51,7 +51,7 @@ export default function SwipeNav({
       mq.removeEventListener("change", attach);
       hammer?.destroy();
     };
-  }, [prevId, nextId, router]);
+  }, [prevSlug, nextSlug, router]);
 
   return (
     <div ref={containerRef} className="touch-pan-y">

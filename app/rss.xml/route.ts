@@ -37,7 +37,7 @@ export async function GET() {
   const items = rows
     .map(({ exhibitions: ex, museums: museum }) => {
       const pubDate = (ex.createdAt ?? new Date()).toUTCString();
-      const link = `${siteUrl}/exhibitions/${ex.id}`;
+      const link = `${siteUrl}/exhibitions/${ex.slug}`;
       const title = escapeXml(ex.title);
       const museumName = museum?.name ? museum.name : "";
 

@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { exhibitions } from "@/db/schema";
+import { exhibitionSlugForInsert } from "@/lib/exhibitionSlug";
 
 const client = new Anthropic();
 
@@ -114,7 +115,7 @@ export async function summarizeIfMissing(
   return result;
 }
 
-// Only fills a field if the existing row has null — never overwrites.
+// Only fills a field if the existing row has null — never overwrites. Slug: keep the existing value on re-scrape (stable URLs).
 export const upsertSet = {
   title: sql`COALESCE(exhibitions.title, excluded.title)`,
   description: sql`COALESCE(exhibitions.description, excluded.description)`,
@@ -123,4 +124,17 @@ export const upsertSet = {
   artist: sql`COALESCE(exhibitions.artist, excluded.artist)`,
   startDate: sql`COALESCE(exhibitions.start_date, excluded.start_date)`,
   endDate: sql`COALESCE(exhibitions.end_date, excluded.end_date)`,
+  slug: sql`exhibitions.slug`,
 };
+
+/** For scraper insert/upsert on `exhibitions.link`. New row: unique slug from title. Existing row: same slug (title changes do not retarget the URL). */
+export async function slugForExhibitionUpsert(link: string, title: string, museumName: string) {
+  const existing = await db.query.exhibitions.findFirst({
+    where: eq(exhibitions.link, link),
+    columns: { slug: true },
+  });
+  if (existing) {
+    return existing.slug;
+  }
+  return exhibitionSlugForInsert(db, title, museumName);
+}

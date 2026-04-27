@@ -20,15 +20,14 @@ function siteUrl() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-
+  const { slug } = await params;
   const rows = await db
     .select()
     .from(exhibitions)
     .leftJoin(museums, eq(exhibitions.museumId, museums.id))
-    .where(eq(exhibitions.id, parseInt(id)))
+    .where(eq(exhibitions.slug, slug))
     .limit(1);
 
   if (!rows.length) return {};
@@ -40,7 +39,7 @@ export async function generateMetadata({
   const description = rawDesc.length > 200
     ? rawDesc.slice(0, 200).trimEnd() + "…"
     : rawDesc || "View this exhibition on Go See Art SF";
-  const url = `${siteUrl()}/exhibitions/${id}`;
+  const url = `${siteUrl()}/exhibitions/${ex.slug}`;
 
   return {
     title,
@@ -83,15 +82,15 @@ function formatDateRange(startDate: string | null, endDate: string | null) {
 export default async function ExhibitionPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
 
   const rows = await db
     .select()
     .from(exhibitions)
     .leftJoin(museums, eq(exhibitions.museumId, museums.id))
-    .where(eq(exhibitions.id, parseInt(id)))
+    .where(eq(exhibitions.slug, slug))
     .limit(1);
 
   if (!rows.length) notFound();
@@ -100,7 +99,12 @@ export default async function ExhibitionPage({
 
   const today = new Date().toISOString().slice(0, 10);
   const allVisible = await db
-    .select({ id: exhibitions.id, startDate: exhibitions.startDate, endDate: exhibitions.endDate })
+    .select({
+      id: exhibitions.id,
+      slug: exhibitions.slug,
+      startDate: exhibitions.startDate,
+      endDate: exhibitions.endDate,
+    })
     .from(exhibitions)
     .where(
       and(
@@ -112,12 +116,12 @@ export default async function ExhibitionPage({
 
   const sorted = sortExhibitions(allVisible, today);
   const currentIndex = sorted.findIndex((row) => row.id === ex.id);
-  const prevId = currentIndex > 0 ? sorted[currentIndex - 1].id : null;
-  const nextId = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1].id : null;
+  const prevSlug = currentIndex > 0 ? sorted[currentIndex - 1].slug : null;
+  const nextSlug = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1].slug : null;
   const dateLabel = formatDateRange(ex.startDate, ex.endDate);
 
   return (
-    <SwipeNav prevId={prevId} nextId={nextId}>
+    <SwipeNav prevSlug={prevSlug} nextSlug={nextSlug}>
     <div className="max-w-3xl mx-auto px-6 py-12">
       <Link href="/" className="text-sm text-muted hover:text-pink transition-colors mb-8 inline-block">
         ← All exhibitions
@@ -175,12 +179,12 @@ export default async function ExhibitionPage({
         </a>
       )}
 
-      {(prevId !== null || nextId !== null) && (
+      {(prevSlug !== null || nextSlug !== null) && (
         <div className="flex justify-between mt-12 pt-8 border-t border-border">
           <div>
-            {prevId !== null && (
+            {prevSlug !== null && (
               <Link
-                href={`/exhibitions/${prevId}`}
+                href={`/exhibitions/${prevSlug}`}
                 className="text-sm text-muted hover:text-pink transition-colors"
               >
                 ← Previous
@@ -188,9 +192,9 @@ export default async function ExhibitionPage({
             )}
           </div>
           <div>
-            {nextId !== null && (
+            {nextSlug !== null && (
               <Link
-                href={`/exhibitions/${nextId}`}
+                href={`/exhibitions/${nextSlug}`}
                 className="text-sm text-muted hover:text-pink transition-colors"
               >
                 Next →

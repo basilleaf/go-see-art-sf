@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
 
 const BASE_URL = "https://www.cccsf.us";
 const LIST_URL = `${BASE_URL}/current-exhibitions`;
@@ -126,7 +126,7 @@ async function main() {
 
     if (!title || !link) continue;
 
-    const slug = link.split("/").pop() ?? link;
+    const postSlug = link.split("/").pop() ?? link;
     const { startDate, endDate } = parseDates(rawDesc, title);
 
     // Strip title and date from description; keep remaining text
@@ -140,7 +140,7 @@ async function main() {
     description = description.length >= 60 ? description : null!;
 
     const remoteImageUrl = imageMap.get(title) ?? null;
-    const image = remoteImageUrl ? await uploadImageIfMissing(link, () => uploadImage(remoteImageUrl, slug)) : null;
+    const image = remoteImageUrl ? await uploadImageIfMissing(link, () => uploadImage(remoteImageUrl, postSlug)) : null;
 
     const [summarized, inferredArtist] = await Promise.all([
       summarizeIfMissing(link, {
@@ -159,6 +159,7 @@ async function main() {
 
     console.log(`  → "${title}" | ${startDate ?? "?"} – ${endDate ?? "?"}`);
 
+    const pathSlug = await slugForExhibitionUpsert(link, title, museum.name);
     await db.insert(exhibitions).values({
       title,
       link,
@@ -169,6 +170,7 @@ async function main() {
       description: summarized,
       artist: inferredArtist,
       museumId,
+      slug: pathSlug,
     }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
   }
 

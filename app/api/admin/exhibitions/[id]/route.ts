@@ -8,11 +8,14 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await request.json();
+  const exhibitionId = parseInt(id, 10);
+
+  const title = (body.title as string) ?? "";
 
   await db
     .update(exhibitions)
     .set({
-      title: body.title,
+      title,
       description: body.description || null,
       image: body.image || null,
       imageCredit: body.imageCredit || null,
@@ -22,7 +25,7 @@ export async function PATCH(
       link: body.link || null,
       hidden: Boolean(body.hidden),
     })
-    .where(eq(exhibitions.id, parseInt(id)));
+    .where(eq(exhibitions.id, exhibitionId));
 
   return Response.json({ ok: true });
 }

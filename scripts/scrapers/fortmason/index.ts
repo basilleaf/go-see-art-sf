@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
 
 const BASE_URL = "https://fortmason.org";
 const LIST_URL = `${BASE_URL}/arts/`;
@@ -140,10 +140,10 @@ async function main() {
 
   console.log(`Found ${items.length} exhibitions (current + ongoing)`);
 
-  for (const { href, slug, startDate, endDate } of items) {
+  for (const { href, slug: eventSlug, startDate, endDate } of items) {
     console.log(`  Fetching ${href}`);
     try {
-      const { title, image, description: rawDescription } = await scrapeDetail(href, slug);
+      const { title, image, description: rawDescription } = await scrapeDetail(href, eventSlug);
       const [description, inferredArtist] = await Promise.all([
         summarizeIfMissing(href, {
           rawDescription,
@@ -159,11 +159,12 @@ async function main() {
         }),
       ]);
       console.log(`  → "${title}" | ${startDate ?? "ongoing"} – ${endDate ?? ""}`);
+      const pathSlug = await slugForExhibitionUpsert(href, title, museum.name);
       await db.insert(exhibitions).values({
         title, image, description,
         startDate, endDate,
         imageCredit: inferredArtist, artist: inferredArtist,
-        link: href, museumId,
+        link: href, museumId, slug: pathSlug,
       }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${href}:`, err);

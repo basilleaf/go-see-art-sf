@@ -63,7 +63,7 @@ export default async function Home() {
         {rows.map(({ exhibitions: ex, museums: museum }) => (
           <Link
             key={ex.id}
-            href={`/exhibitions/${ex.id}`}
+            href={`/exhibitions/${ex.slug}`}
             className="group block"
           >
             <div className="overflow-hidden bg-border aspect-[4/3] w-full mb-3">

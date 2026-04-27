@@ -26,6 +26,7 @@ async function main() {
   const newExhibitions = await db
     .select({
       id: exhibitions.id,
+      slug: exhibitions.slug,
       title: exhibitions.title,
       description: exhibitions.description,
       image: exhibitions.image,
@@ -45,6 +46,7 @@ async function main() {
   const missingContent = await db
     .select({
       id: exhibitions.id,
+      slug: exhibitions.slug,
       title: exhibitions.title,
       image: exhibitions.image,
       imageCredit: exhibitions.imageCredit,
@@ -124,7 +126,7 @@ ${newExhibitions
       ex.startDate || ex.endDate
         ? `${formatDate(ex.startDate)} – ${formatDate(ex.endDate)}`
         : "dates unknown";
-    const siteUrl = `${SITE_URL}/exhibitions/${ex.id}`;
+    const siteUrl = `${SITE_URL}/exhibitions/${ex.slug}`;
     return `
 <div style="border:1px solid #ddd;border-radius:6px;padding:16px;margin-bottom:16px;">
   <p style="margin:0 0 4px;font-size:18px;font-weight:bold;">
@@ -159,7 +161,7 @@ ${newExhibitions
   <tbody>
     ${missingContent
       .map((ex) => {
-        const siteUrl = `${SITE_URL}/exhibitions/${ex.id}`;
+        const siteUrl = `${SITE_URL}/exhibitions/${ex.slug}`;
         return `
     <tr>
       <td style="padding:6px 8px;border-bottom:1px solid #eee;"><a href="${esc(siteUrl)}" style="color:#1a0dab;">${esc(ex.title)}</a></td>
