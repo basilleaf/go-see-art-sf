@@ -11,7 +11,7 @@ export type ContactState = {
 
 export async function sendContactEmail(
   _prev: ContactState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ContactState> {
   const name = formData.get("name")?.toString().trim();
   const email = formData.get("email")?.toString().trim();
@@ -35,7 +35,7 @@ export async function sendContactEmail(
 
   if (error) {
     console.error("Resend error:", error);
-    return { error: `Failed to send message: ${error.message}` };
+    return { error: "Something went wrong. Please try again later." };
   }
 
   return { success: true };
