@@ -52,12 +52,12 @@ export default async function Home() {
               )}
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center justify-between mb-1">
                 <p className="text-xs uppercase tracking-widest text-muted">
                   {museum?.name}
                 </p>
                 {ex.endDate && ex.endDate <= threeWeeksOut && (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-pink/10 text-pink px-1.5 py-0.5 rounded-sm">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-pink/10 text-pink px-1.5 py-0.5 rounded-sm whitespace-nowrap">
                     Ending soon
                   </span>
                 )}

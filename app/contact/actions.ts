@@ -34,7 +34,8 @@ export async function sendContactEmail(
   });
 
   if (error) {
-    return { error: "Failed to send message. Please try again." };
+    console.error("Resend error:", error);
+    return { error: `Failed to send message: ${error.message}` };
   }
 
   return { success: true };
