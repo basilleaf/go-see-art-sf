@@ -7,6 +7,7 @@ import SwipeNav from "./SwipeNav";
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
 import { and, eq, gte, isNull, or } from "drizzle-orm";
+import { sortExhibitions } from "@/lib/sortExhibitions";
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
@@ -44,19 +45,19 @@ export default async function ExhibitionPage({
 
   const today = new Date().toISOString().slice(0, 10);
   const allVisible = await db
-    .select({ id: exhibitions.id })
+    .select({ id: exhibitions.id, startDate: exhibitions.startDate, endDate: exhibitions.endDate })
     .from(exhibitions)
     .where(
       and(
         eq(exhibitions.hidden, false),
         or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
       )
-    )
-    .orderBy(exhibitions.endDate, exhibitions.createdAt);
+    );
 
-  const currentIndex = allVisible.findIndex((row) => row.id === ex.id);
-  const prevId = currentIndex > 0 ? allVisible[currentIndex - 1].id : null;
-  const nextId = currentIndex < allVisible.length - 1 ? allVisible[currentIndex + 1].id : null;
+  const sorted = sortExhibitions(allVisible, today);
+  const currentIndex = sorted.findIndex((row) => row.id === ex.id);
+  const prevId = currentIndex > 0 ? sorted[currentIndex - 1].id : null;
+  const nextId = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1].id : null;
   const dateLabel = formatDateRange(ex.startDate, ex.endDate);
 
   return (

@@ -5,19 +5,28 @@ import { db } from "@/db";
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
 import { and, eq, gte, or, isNull } from "drizzle-orm";
+import { sortExhibitions } from "@/lib/sortExhibitions";
+
+function ordinalSuffix(d: number): string {
+  if (d === 1 || d === 21 || d === 31) return "st";
+  if (d === 2 || d === 22) return "nd";
+  if (d === 3 || d === 23) return "rd";
+  return "th";
+}
 
 function formatComingDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
   const date = new Date(year, month - 1, day);
   const monthName = date.toLocaleString("en-US", { month: "short" });
   const d = date.getDate();
-  const suffix = d === 1 || d === 21 || d === 31 ? "st" : d === 2 || d === 22 ? "nd" : d === 3 || d === 23 ? "rd" : "th";
-  return `${monthName} ${d}${suffix}`;
+  return `${monthName} ${d}${ordinalSuffix(d)}`;
 }
 
 export default async function Home() {
   const today = new Date().toISOString().slice(0, 10);
-  const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
   const rawRows = await db
     .select()
     .from(exhibitions)
@@ -26,29 +35,23 @@ export default async function Home() {
       and(
         eq(exhibitions.hidden, false),
         or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
-      )
+      ),
     );
 
-  const current = rawRows
-    .filter(({ exhibitions: ex }) => !ex.startDate || ex.startDate <= today)
-    .sort((a, b) => {
-      if (!a.exhibitions.endDate && !b.exhibitions.endDate) return 0;
-      if (!a.exhibitions.endDate) return 1;
-      if (!b.exhibitions.endDate) return -1;
-      return a.exhibitions.endDate.localeCompare(b.exhibitions.endDate);
-    });
-
-  const upcoming = rawRows
-    .filter(({ exhibitions: ex }) => ex.startDate && ex.startDate > today)
-    .sort((a, b) => a.exhibitions.startDate!.localeCompare(b.exhibitions.startDate!));
-
-  const rows = [...current, ...upcoming];
+  const rows = sortExhibitions(
+    rawRows.map((r) => ({ ...r, startDate: r.exhibitions.startDate, endDate: r.exhibitions.endDate })),
+    today,
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="mb-10">
-        <h1 className="text-3xl font-semibold tracking-tight">SF Exhibitions</h1>
-        <p className="text-muted mt-1">{rows.length} exhibitions on view now &amp; coming soon</p>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          SF Exhibitions
+        </h1>
+        <p className="text-muted mt-1">
+          {rows.length} exhibitions on view now &amp; coming soon
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
