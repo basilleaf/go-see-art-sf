@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/db";
-import { exhibitions, museums } from "@/db/schema";
+import { exhibitions } from "@/db/schema";
 import { and, eq, gte, isNotNull, isNull, or } from "drizzle-orm";
 
 export const alt = "Go See Art SF — Select San Francisco art museum exhibitions";
@@ -20,7 +20,6 @@ export default async function Image() {
   const rows = await db
     .select({ image: exhibitions.image })
     .from(exhibitions)
-    .leftJoin(museums, eq(exhibitions.museumId, museums.id))
     .where(
       and(
         eq(exhibitions.hidden, false),
@@ -32,21 +31,29 @@ export default async function Image() {
 
   const images = rows.map((r) => r.image).filter(Boolean) as string[];
 
-  function cell(src: string | undefined, borderRight: boolean, borderBottom: boolean) {
+  function cell(src: string | undefined, right: boolean) {
     return (
       <div
         style={{
           width: COL_W,
           height: ROW_H,
-          background: src ? undefined : "#e5e5e5",
-          backgroundImage: src ? `url(${src})` : undefined,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          borderRight: borderRight ? `${GAP}px solid #ffffff` : undefined,
-          borderBottom: borderBottom ? `${GAP}px solid #ffffff` : undefined,
+          display: "flex",
+          overflow: "hidden",
+          background: "#e5e5e5",
+          borderRight: right ? `${GAP}px solid #ffffff` : "none",
           flexShrink: 0,
+          position: "relative",
         }}
-      />
+      >
+        {src && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        )}
+      </div>
     );
   }
 
@@ -69,7 +76,7 @@ export default async function Image() {
             alignItems: "center",
             height: HEADER_H,
             padding: "0 60px",
-            borderBottom: `1px solid #e5e5e5`,
+            borderBottom: "1px solid #e5e5e5",
             gap: 28,
             flexShrink: 0,
           }}
@@ -97,16 +104,16 @@ export default async function Image() {
 
         {/* Grid row 1 */}
         <div style={{ display: "flex" }}>
-          {cell(images[0], true, false)}
-          {cell(images[1], true, false)}
-          {cell(images[2], false, false)}
+          {cell(images[0], true)}
+          {cell(images[1], true)}
+          {cell(images[2], false)}
         </div>
 
         {/* Grid row 2 */}
         <div style={{ display: "flex", marginTop: GAP }}>
-          {cell(images[3], true, false)}
-          {cell(images[4], true, false)}
-          {cell(images[5], false, false)}
+          {cell(images[3], true)}
+          {cell(images[4], true)}
+          {cell(images[5], false)}
         </div>
       </div>
     ),
