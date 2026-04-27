@@ -5,7 +5,7 @@ import { db } from "@/db";
 
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, isNull, or } from "drizzle-orm";
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
@@ -40,6 +40,22 @@ export default async function ExhibitionPage({
   if (!rows.length) notFound();
 
   const { exhibitions: ex, museums: museum } = rows[0];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const allVisible = await db
+    .select({ id: exhibitions.id })
+    .from(exhibitions)
+    .where(
+      and(
+        eq(exhibitions.hidden, false),
+        or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
+      )
+    )
+    .orderBy(exhibitions.endDate, exhibitions.createdAt);
+
+  const currentIndex = allVisible.findIndex((row) => row.id === ex.id);
+  const prevId = currentIndex > 0 ? allVisible[currentIndex - 1].id : null;
+  const nextId = currentIndex < allVisible.length - 1 ? allVisible[currentIndex + 1].id : null;
   const dateLabel = formatDateRange(ex.startDate, ex.endDate);
 
   return (
@@ -98,6 +114,31 @@ export default async function ExhibitionPage({
         >
           Visit exhibition page ↗
         </a>
+      )}
+
+      {(prevId !== null || nextId !== null) && (
+        <div className="flex justify-between mt-12 pt-8 border-t border-border">
+          <div>
+            {prevId !== null && (
+              <Link
+                href={`/exhibitions/${prevId}`}
+                className="text-sm text-muted hover:text-pink transition-colors"
+              >
+                ← Previous
+              </Link>
+            )}
+          </div>
+          <div>
+            {nextId !== null && (
+              <Link
+                href={`/exhibitions/${nextId}`}
+                className="text-sm text-muted hover:text-pink transition-colors"
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
