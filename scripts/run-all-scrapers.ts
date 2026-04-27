@@ -18,9 +18,11 @@ for (const scraper of scrapers) {
   console.log(`Running: ${name}`);
   console.log("=".repeat(40));
   try {
-    execSync(`npx tsx --env-file=.env "${scraper}"`, {
+    const root = path.join(__dirname, "..");
+    const envFlag = fs.existsSync(path.join(root, ".env")) ? "--env-file=.env" : "";
+    execSync(`npx tsx ${envFlag} "${scraper}"`, {
       stdio: "inherit",
-      cwd: path.join(__dirname, ".."),
+      cwd: root,
     });
   } catch {
     console.error(`\nScraper "${name}" failed — continuing`);
