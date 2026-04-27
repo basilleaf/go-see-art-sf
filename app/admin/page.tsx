@@ -44,16 +44,24 @@ export default async function AdminPage() {
             ) : (
               <table className="w-full text-sm border-collapse">
                 <tbody>
-                  {exs.map((ex) => (
+                  {exs.map((ex) => {
+                    const missing = [
+                      !ex.image && "image",
+                      !ex.imageCredit && "image credit",
+                    ].filter(Boolean);
+                    return (
                     <tr key={ex.id} className="border border-border">
-                      <td className="px-3 py-2">{ex.title}</td>
-                      {!ex.image ? (
-                        <td className="px-3 py-2 text-xs text-amber-600 whitespace-nowrap w-0">
-                          no image
-                        </td>
-                      ) : (
-                        <td />
-                      )}
+                      <td className="px-3 py-2">
+                        {ex.title}
+                        {missing.length > 0 && (
+                          <span
+                            title={`Missing: ${missing.join(", ")}`}
+                            className="ml-1.5 cursor-default"
+                          >
+                            ⚠️
+                          </span>
+                        )}
+                      </td>
                       <td className="px-3 py-2 w-0">
                         <Link
                           href={`/admin/exhibitions/${ex.id}`}
@@ -63,7 +71,8 @@ export default async function AdminPage() {
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             )}
