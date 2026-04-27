@@ -8,9 +8,28 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+function siteUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return "http://localhost:3000";
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "Go see art SF",
   description: "Select San Francisco art museum exhibitions, all in one place",
+  openGraph: {
+    title: "Go see art SF",
+    description: "Select San Francisco art museum exhibitions, all in one place",
+    siteName: "Go See Art SF",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Go see art SF",
+    description: "Select San Francisco art museum exhibitions, all in one place",
+  },
 };
 
 export default function RootLayout({
