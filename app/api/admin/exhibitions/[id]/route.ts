@@ -20,6 +20,7 @@ export async function PATCH(
       startDate: body.startDate || null,
       endDate: body.endDate || null,
       link: body.link || null,
+      hidden: Boolean(body.hidden),
     })
     .where(eq(exhibitions.id, parseInt(id)));
 

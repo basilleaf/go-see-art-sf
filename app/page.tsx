@@ -4,7 +4,7 @@ import { db } from "@/db";
 
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
-import { eq, gte, or, isNull } from "drizzle-orm";
+import { and, eq, gte, or, isNull } from "drizzle-orm";
 
 export default async function Home() {
   const today = new Date().toISOString().slice(0, 10);
@@ -12,7 +12,12 @@ export default async function Home() {
     .select()
     .from(exhibitions)
     .leftJoin(museums, eq(exhibitions.museumId, museums.id))
-    .where(or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)))
+    .where(
+      and(
+        eq(exhibitions.hidden, false),
+        or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
+      )
+    )
     .orderBy(exhibitions.endDate, exhibitions.createdAt);
 
   return (

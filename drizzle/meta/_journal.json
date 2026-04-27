@@ -15,6 +15,13 @@
       "when": 1777171004457,
       "tag": "0001_cooing_weapon_omega",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777259701959,
+      "tag": "0002_absent_vance_astro",
+      "breakpoints": true
     }
   ]
 }

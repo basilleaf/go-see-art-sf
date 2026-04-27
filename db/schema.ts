@@ -1,4 +1,4 @@
-import { pgTable, serial, text, date, integer, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, date, integer, timestamp, boolean, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const museums = pgTable("museums", {
@@ -21,6 +21,7 @@ export const exhibitions = pgTable("exhibitions", {
     .notNull()
     .references(() => museums.id),
   link: text("link"),
+  hidden: boolean("hidden").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => [unique().on(t.link)]);
 

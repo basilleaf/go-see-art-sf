@@ -1,0 +1,1 @@
+ALTER TABLE "exhibitions" ADD COLUMN "hidden" boolean DEFAULT false NOT NULL;

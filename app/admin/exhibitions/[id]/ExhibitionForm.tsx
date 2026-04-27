@@ -22,6 +22,7 @@ export default function ExhibitionForm({
     startDate: exhibition.startDate ?? "",
     endDate: exhibition.endDate ?? "",
     link: exhibition.link ?? "",
+    hidden: exhibition.hidden ?? false,
   });
 
   const [saveStatus, setSaveStatus] = useState<
@@ -32,7 +33,7 @@ export default function ExhibitionForm({
   >("idle");
   const [uploadError, setUploadError] = useState("");
 
-  function set(field: keyof typeof form, value: string) {
+  function set(field: keyof typeof form, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
     setSaveStatus("idle");
   }
@@ -193,6 +194,16 @@ export default function ExhibitionForm({
         type="url"
         placeholder="https://…"
       />
+
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={form.hidden}
+          onChange={(e) => set("hidden", e.target.checked)}
+          className="w-4 h-4"
+        />
+        <span className="text-sm">Hide from homepage</span>
+      </label>
 
       <div className="flex items-center gap-3 pt-1">
         <button
