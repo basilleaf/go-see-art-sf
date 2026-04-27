@@ -169,7 +169,8 @@ async function main() {
           museumName: museum.name,
         }),
       ]);
-      const data = { ...rawData, description, artist: rawData.artist ?? inferredArtist };
+      const artist = rawData.artist ?? inferredArtist;
+      const data = { ...rawData, description, artist, imageCredit: rawData.imageCredit ?? artist };
       console.log(`  → "${data.title}" | ${data.startDate} – ${data.endDate}`);
       await db.insert(exhibitions).values({ ...data, museumId })
         .onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });

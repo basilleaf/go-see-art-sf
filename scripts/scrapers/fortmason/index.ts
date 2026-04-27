@@ -163,7 +163,7 @@ async function main() {
       await db.insert(exhibitions).values({
         title, image, description,
         startDate, endDate,
-        imageCredit: null, artist: inferredArtist,
+        imageCredit: inferredArtist, artist: inferredArtist,
         link: href, museumId,
       }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {

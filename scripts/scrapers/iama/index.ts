@@ -152,7 +152,7 @@ async function main() {
       console.log(`  → "${title}" | ${startDate ?? "permanent"} – ${endDate ?? ""}`);
       await db.insert(exhibitions).values({
         title, image, description, startDate, endDate,
-        imageCredit: null, artist: inferredArtist, link: href, museumId,
+        imageCredit: inferredArtist, artist: inferredArtist, link: href, museumId,
       }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${href}:`, err);

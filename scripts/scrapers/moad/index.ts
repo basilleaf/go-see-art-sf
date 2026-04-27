@@ -166,7 +166,8 @@ async function main() {
           museumName: museum.name,
         }),
       ]);
-      const data = { ...rawData, description, artist: rawData.artist ?? inferredArtist };
+      const artist = rawData.artist ?? inferredArtist;
+      const data = { ...rawData, description, artist, imageCredit: rawData.imageCredit ?? artist };
       console.log(`  → "${data.title}" | artist: ${data.artist} | ${data.startDate} – ${data.endDate}`);
 
       await db

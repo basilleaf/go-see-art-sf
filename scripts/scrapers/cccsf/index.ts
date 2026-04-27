@@ -166,7 +166,7 @@ async function main() {
       startDate,
       endDate,
       image,
-      imageCredit: null,
+      imageCredit: inferredArtist,
       description: summarized,
       artist: inferredArtist,
       museumId,
