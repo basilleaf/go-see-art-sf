@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { db } from "@/db";
 import SwipeNav from "./SwipeNav";
 
@@ -8,6 +9,60 @@ export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
 import { and, eq, gte, isNotNull, isNull, or } from "drizzle-orm";
 import { sortExhibitions } from "@/lib/sortExhibitions";
+
+function siteUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return "http://localhost:3000";
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+
+  const rows = await db
+    .select()
+    .from(exhibitions)
+    .leftJoin(museums, eq(exhibitions.museumId, museums.id))
+    .where(eq(exhibitions.id, parseInt(id)))
+    .limit(1);
+
+  if (!rows.length) return {};
+
+  const { exhibitions: ex, museums: museum } = rows[0];
+
+  const title = museum?.name ? `${ex.title} — ${museum.name}` : ex.title;
+  const rawDesc = ex.description ?? museum?.name ?? "";
+  const description = rawDesc.length > 200
+    ? rawDesc.slice(0, 200).trimEnd() + "…"
+    : rawDesc || "View this exhibition on Go See Art SF";
+  const url = `${siteUrl()}/exhibitions/${id}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+      siteName: "Go See Art SF",
+      ...(ex.image && {
+        images: [{ url: ex.image, width: 1200, height: 800, alt: ex.title }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(ex.image && { images: [ex.image] }),
+    },
+  };
+}
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
