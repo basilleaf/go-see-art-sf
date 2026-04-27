@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/db";
 import { exhibitions } from "@/db/schema";
-import { and, eq, gte, isNotNull, isNull, or } from "drizzle-orm";
+import { and, eq, gte, isNotNull, isNull, lte, or } from "drizzle-orm";
 
 export const alt = "Go See Art SF — Select San Francisco art museum exhibitions";
 export const size = { width: 1200, height: 630 };
@@ -24,6 +24,7 @@ export default async function Image() {
       and(
         eq(exhibitions.hidden, false),
         isNotNull(exhibitions.image),
+        or(isNull(exhibitions.startDate), lte(exhibitions.startDate, today)),
         or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
       ),
     )
