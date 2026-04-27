@@ -55,7 +55,7 @@ export default async function Home() {
           SF Exhibitions
         </h1>
         <p className="text-muted mt-1">
-          {rows.length} exhibitions on view now &amp; coming soon
+          {`${rows.length} exhibitions on view now & coming soon`}
         </p>
       </div>
 
