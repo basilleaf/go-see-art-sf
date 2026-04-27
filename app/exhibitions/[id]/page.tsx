@@ -6,7 +6,7 @@ import SwipeNav from "./SwipeNav";
 
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
-import { and, eq, gte, isNull, or } from "drizzle-orm";
+import { and, eq, gte, isNotNull, isNull, or } from "drizzle-orm";
 import { sortExhibitions } from "@/lib/sortExhibitions";
 
 function formatDate(dateStr: string | null) {
@@ -50,6 +50,7 @@ export default async function ExhibitionPage({
     .where(
       and(
         eq(exhibitions.hidden, false),
+        isNotNull(exhibitions.image),
         or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
       )
     );

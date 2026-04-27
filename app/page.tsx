@@ -4,7 +4,7 @@ import { db } from "@/db";
 
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
-import { and, eq, gte, or, isNull } from "drizzle-orm";
+import { and, eq, gte, isNotNull, or, isNull } from "drizzle-orm";
 import { sortExhibitions } from "@/lib/sortExhibitions";
 
 function ordinalSuffix(d: number): string {
@@ -34,6 +34,7 @@ export default async function Home() {
     .where(
       and(
         eq(exhibitions.hidden, false),
+        isNotNull(exhibitions.image),
         or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
       ),
     );
