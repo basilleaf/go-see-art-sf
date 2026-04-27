@@ -7,6 +7,8 @@ const client = new Anthropic();
 
 const SYSTEM = `Summarize this museum exhibition description in a few sentences or at most one paragraph for a website promoting the exhibition. If there isn't description content, use other data such as museum name, start date, or write generic marketing copy for this show. If the content is already a paragraph or shorter, rewrite it in your own voice. The goal is to avoid lifting verbatim copy from the source material. Return only the summary with no preamble or explanation.`;
 
+const ARTIST_SYSTEM = `Extract the primary artist or artists from this museum exhibition. Return only the name(s) — nothing else. If multiple artists, list them separated by commas. If no specific artist can be identified from the provided text, return exactly: unknown`;
+
 export async function summarizeDescription({
   rawDescription,
   title,
@@ -38,6 +40,43 @@ export async function summarizeDescription({
   const block = message.content[0];
   if (block.type !== "text") return null;
   return block.text.trim() || null;
+}
+
+export async function inferArtistFromDescription({
+  rawDescription,
+  title,
+  museumName,
+}: {
+  rawDescription?: string | null;
+  title: string;
+  museumName: string;
+}): Promise<string | null> {
+  const lines = [`Title: ${title}`, `Museum: ${museumName}`];
+  if (rawDescription?.trim()) lines.push(`\nDescription:\n${rawDescription.trim()}`);
+
+  const message = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 100,
+    system: [{ type: "text", text: ARTIST_SYSTEM, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: lines.join("\n") }],
+  });
+
+  const block = message.content[0];
+  if (block.type !== "text") return null;
+  const text = block.text.trim();
+  return !text || text.toLowerCase() === "unknown" ? null : text;
+}
+
+export async function inferArtistIfMissing(
+  link: string,
+  ctx: Parameters<typeof inferArtistFromDescription>[0]
+): Promise<string | null> {
+  const existing = await db.query.exhibitions.findFirst({
+    where: eq(exhibitions.link, link),
+    columns: { artist: true },
+  });
+  if (existing?.artist) return null;
+  return inferArtistFromDescription(ctx);
 }
 
 export async function summarizeIfMissing(

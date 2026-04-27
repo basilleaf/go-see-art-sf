@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
 
 const BASE_URL = "https://iamasf.org";
 const MUSEUM_DIR = "iama";
@@ -135,17 +135,24 @@ async function main() {
     console.log(`  Fetching ${href}`);
     try {
       const { title, image, description: rawDescription } = await scrapeDetail(href, slug);
-      const description = await summarizeIfMissing(href, {
-        rawDescription,
-        title,
-        museumName: museum.name,
-        startDate,
-        endDate,
-      });
+      const [description, inferredArtist] = await Promise.all([
+        summarizeIfMissing(href, {
+          rawDescription,
+          title,
+          museumName: museum.name,
+          startDate,
+          endDate,
+        }),
+        inferArtistIfMissing(href, {
+          rawDescription,
+          title,
+          museumName: museum.name,
+        }),
+      ]);
       console.log(`  → "${title}" | ${startDate ?? "permanent"} – ${endDate ?? ""}`);
       await db.insert(exhibitions).values({
         title, image, description, startDate, endDate,
-        imageCredit: null, artist: null, link: href, museumId,
+        imageCredit: null, artist: inferredArtist, link: href, museumId,
       }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${href}:`, err);

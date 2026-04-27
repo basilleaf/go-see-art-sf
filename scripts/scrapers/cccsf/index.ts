@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
 
 const BASE_URL = "https://www.cccsf.us";
 const LIST_URL = `${BASE_URL}/current-exhibitions`;
@@ -143,13 +143,20 @@ async function main() {
     const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
     if (image) console.log(`  Uploaded image → ${image}`);
 
-    const summarized = await summarizeIfMissing(link, {
-      rawDescription: description || null,
-      title,
-      museumName: museum.name,
-      startDate,
-      endDate,
-    });
+    const [summarized, inferredArtist] = await Promise.all([
+      summarizeIfMissing(link, {
+        rawDescription: description || null,
+        title,
+        museumName: museum.name,
+        startDate,
+        endDate,
+      }),
+      inferArtistIfMissing(link, {
+        rawDescription: description || null,
+        title,
+        museumName: museum.name,
+      }),
+    ]);
 
     console.log(`  → "${title}" | ${startDate ?? "?"} – ${endDate ?? "?"}`);
 
@@ -161,7 +168,7 @@ async function main() {
       image,
       imageCredit: null,
       description: summarized,
-      artist: null,
+      artist: inferredArtist,
       museumId,
     }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
   }

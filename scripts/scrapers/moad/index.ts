@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
 
 const BASE_URL = "https://www.moadsf.org";
 const HEADERS = {
@@ -151,15 +151,22 @@ async function main() {
   for (const exhibitionPath of links) {
     try {
       const rawData = await scrapeExhibitionDetail(exhibitionPath, MUSEUM_DIR);
-      const description = await summarizeIfMissing(rawData.link, {
-        rawDescription: rawData.description,
-        title: rawData.title,
-        artist: rawData.artist,
-        museumName: museum.name,
-        startDate: rawData.startDate,
-        endDate: rawData.endDate,
-      });
-      const data = { ...rawData, description };
+      const [description, inferredArtist] = await Promise.all([
+        summarizeIfMissing(rawData.link, {
+          rawDescription: rawData.description,
+          title: rawData.title,
+          artist: rawData.artist,
+          museumName: museum.name,
+          startDate: rawData.startDate,
+          endDate: rawData.endDate,
+        }),
+        rawData.artist ? Promise.resolve(null) : inferArtistIfMissing(rawData.link, {
+          rawDescription: rawData.description,
+          title: rawData.title,
+          museumName: museum.name,
+        }),
+      ]);
+      const data = { ...rawData, description, artist: rawData.artist ?? inferredArtist };
       console.log(`  → "${data.title}" | artist: ${data.artist} | ${data.startDate} – ${data.endDate}`);
 
       await db
