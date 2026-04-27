@@ -72,7 +72,7 @@ async function main() {
   // Extract error/warning lines for prominent display
   const errorLines = rawLogs
     .split("\n")
-    .filter((l) => /error|warning|failed|null|undefined/i.test(l))
+    .filter((l) => /\b(error|warning|failed)\b/i.test(l) && !/^\s*[→✓]/.test(l))
     .slice(0, 30);
 
   const hasNew = newExhibitions.length > 0;
