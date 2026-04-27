@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://sfmcd.org";
 const MUSEUM_DIR = "sfmcd";
@@ -70,8 +70,7 @@ async function scrapeExhibitionDetail(href: string) {
   // Hero image: featured image in post-content
   const heroImg = root.querySelector("span.post-featured-img img");
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
-  const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
-  if (image) console.log(`    Uploaded image → ${image}`);
+  const image = remoteImageUrl ? await uploadImageIfMissing(href, () => uploadImage(remoteImageUrl, slug)) : null;
 
   // Image credit: first H6, strip "Above Image:" prefix
   const imageCredit = root.querySelector("h6")?.text.trim().replace(/^above image:\s*/i, "") || null;

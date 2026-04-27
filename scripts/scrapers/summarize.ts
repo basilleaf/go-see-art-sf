@@ -79,6 +79,23 @@ export async function inferArtistIfMissing(
   return inferArtistFromDescription(ctx);
 }
 
+export async function uploadImageIfMissing(
+  link: string,
+  upload: () => Promise<string | null>
+): Promise<string | null> {
+  const existing = await db.query.exhibitions.findFirst({
+    where: eq(exhibitions.link, link),
+    columns: { image: true },
+  });
+  if (existing?.image) {
+    console.log(`    [image] skipped — already in DB`);
+    return null;
+  }
+  const result = await upload();
+  if (result) console.log(`    Uploaded image → ${result}`);
+  return result;
+}
+
 export async function summarizeIfMissing(
   link: string,
   ctx: Parameters<typeof summarizeDescription>[0]

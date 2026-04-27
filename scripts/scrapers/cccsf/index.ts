@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://www.cccsf.us";
 const LIST_URL = `${BASE_URL}/current-exhibitions`;
@@ -140,8 +140,7 @@ async function main() {
     description = description.length >= 60 ? description : null!;
 
     const remoteImageUrl = imageMap.get(title) ?? null;
-    const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
-    if (image) console.log(`  Uploaded image → ${image}`);
+    const image = remoteImageUrl ? await uploadImageIfMissing(link, () => uploadImage(remoteImageUrl, slug)) : null;
 
     const [summarized, inferredArtist] = await Promise.all([
       summarizeIfMissing(link, {

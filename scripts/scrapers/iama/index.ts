@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://iamasf.org";
 const MUSEUM_DIR = "iama";
@@ -66,8 +66,7 @@ async function scrapeDetail(href: string, slug: string) {
   // First uploaded image (skip theme assets)
   const heroImg = root.querySelectorAll("img[src*='wp-content/uploads']")[0];
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
-  const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
-  if (image) console.log(`    Uploaded image → ${image}`);
+  const image = remoteImageUrl ? await uploadImageIfMissing(href, () => uploadImage(remoteImageUrl, slug)) : null;
 
   const SKIP = /^(continue reading|reserve your visit|©)/i;
   const description = root

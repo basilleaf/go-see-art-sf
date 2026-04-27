@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://fortmason.org";
 const LIST_URL = `${BASE_URL}/arts/`;
@@ -83,8 +83,7 @@ async function scrapeDetail(href: string, slug: string) {
 
   const heroImg = root.querySelector(".tribe-events-event-image img, .wp-post-image");
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
-  const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
-  if (image) console.log(`    Uploaded image → ${image}`);
+  const image = remoteImageUrl ? await uploadImageIfMissing(href, () => uploadImage(remoteImageUrl, slug)) : null;
 
   const SKIP = /^(sign up|reserve your|subscribe|©|fort mason center)/i;
   const description = root

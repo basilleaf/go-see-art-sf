@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://www.sfmoma.org";
 const MUSEUM_DIR = "sfmoma";
@@ -91,8 +91,7 @@ async function scrapeExhibitionDetail(href: string) {
     cloudfrontImgs.find((img) => img.closest("figure") !== null) ??
     cloudfrontImgs[0] ?? null;
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
-  const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
-  if (image) console.log(`    Uploaded image → ${image}`);
+  const image = remoteImageUrl ? await uploadImageIfMissing(href, () => uploadImage(remoteImageUrl, slug)) : null;
 
   // Image credit — prefer the explicit "Header image:" paragraph
   const headerCreditEl = root

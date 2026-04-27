@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://www.famsf.org";
 const LIST_URL = `${BASE_URL}/exhibitions?where=de-young`;
@@ -90,8 +90,7 @@ async function scrapeExhibitionDetail(href: string) {
     return (gp?.classNames ?? "").includes("aspect-3/4");
   });
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
-  const image = remoteImageUrl ? await uploadImage(remoteImageUrl, slug) : null;
-  if (image) console.log(`    Uploaded image → ${image}`);
+  const image = remoteImageUrl ? await uploadImageIfMissing(href, () => uploadImage(remoteImageUrl, slug)) : null;
 
   // Image credit from figcaption
   const imageCredit = root.querySelector("figcaption.media-caption")?.text.trim() || null;

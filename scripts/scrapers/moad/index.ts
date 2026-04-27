@@ -4,7 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
-import { summarizeIfMissing, inferArtistIfMissing, upsertSet } from "../summarize";
+import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing } from "../summarize";
 
 const BASE_URL = "https://www.moadsf.org";
 const HEADERS = {
@@ -88,10 +88,7 @@ async function scrapeExhibitionDetail(exhibitionPath: string, museumDir: string)
     .find((img) => (img.getAttribute("src") ?? "").includes("62ea747d1e6f2d3fc81babe5"));
   const remoteImageUrl = heroImg?.getAttribute("src") ?? null;
   const imageCredit = heroImg?.getAttribute("alt")?.trim() || null;
-  const image = remoteImageUrl
-    ? await uploadImage(remoteImageUrl, museumDir, slug)
-    : null;
-  if (image) console.log(`    Uploaded image → ${image}`);
+  const image = remoteImageUrl ? await uploadImageIfMissing(url, () => uploadImage(remoteImageUrl, museumDir, slug)) : null;
 
   // Description (paragraphs in section-event-top, skip empties and zero-width joiners)
   const ZWJ = "‍";
