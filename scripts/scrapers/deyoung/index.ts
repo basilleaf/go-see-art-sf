@@ -45,13 +45,13 @@ function extractDate(root: ReturnType<typeof parse>): { startDate: string | null
   const isEventDate = (t: string) =>
     /\b(am|pm)\b/i.test(t) || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(,|\s)/i.test(t) || /\d:\d\d/.test(t);
 
-  // Only look in the first ~4 occurrences — sidebar dates appear much later (index 8+)
-  const datePara = [...root.querySelectorAll("p.mt-12.text-secondary.f-body-1.order-3")]
-    .slice(0, 4)
-    .find((p) => {
-      const t = p.text.trim();
-      return !isEventDate(t) && /(through|opening|ongoing|\d{4})/i.test(t);
-    });
+  // The exhibition date lives in the sticky sidebar as p.f-body-1.font-medium
+  // (e.g. "August 26, 2025 – August 31, 2028"). The p.mt-12.text-secondary.f-body-1.order-3
+  // elements appear only in the "what else is on" section for other exhibitions.
+  const datePara = root.querySelectorAll("p.f-body-1.font-medium").find((p) => {
+    const t = p.text.trim();
+    return !isEventDate(t) && /(through|opening|ongoing|\d{4})/i.test(t);
+  });
 
   return datePara ? parseDateText(datePara.text.trim()) : { startDate: null, endDate: null };
 }
