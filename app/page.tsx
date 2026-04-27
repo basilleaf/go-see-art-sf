@@ -8,6 +8,7 @@ import { and, eq, gte, or, isNull } from "drizzle-orm";
 
 export default async function Home() {
   const today = new Date().toISOString().slice(0, 10);
+  const threeWeeksOut = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const rows = await db
     .select()
     .from(exhibitions)
@@ -51,9 +52,16 @@ export default async function Home() {
               )}
             </div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-muted mb-1">
-                {museum?.name}
-              </p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-xs uppercase tracking-widest text-muted">
+                  {museum?.name}
+                </p>
+                {ex.endDate && ex.endDate <= threeWeeksOut && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-pink/10 text-pink px-1.5 py-0.5 rounded-sm">
+                    Ending soon
+                  </span>
+                )}
+              </div>
               <h2 className="font-semibold text-base leading-snug group-hover:text-pink transition-colors">
                 {ex.title}
               </h2>

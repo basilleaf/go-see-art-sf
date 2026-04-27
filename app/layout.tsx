@@ -9,8 +9,8 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "go see art SF",
-  description: "SF art museum exhibitions, all in one place",
+  title: "Go see art SF",
+  description: "Select San Francisco art museum exhibitions, all in one place",
 };
 
 export default function RootLayout({
