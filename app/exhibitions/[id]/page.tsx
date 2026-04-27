@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
+import SwipeNav from "./SwipeNav";
 
 export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
@@ -59,6 +60,7 @@ export default async function ExhibitionPage({
   const dateLabel = formatDateRange(ex.startDate, ex.endDate);
 
   return (
+    <SwipeNav prevId={prevId} nextId={nextId}>
     <div className="max-w-3xl mx-auto px-6 py-12">
       <Link href="/" className="text-sm text-muted hover:text-pink transition-colors mb-8 inline-block">
         ← All exhibitions
@@ -141,5 +143,6 @@ export default async function ExhibitionPage({
         </div>
       )}
     </div>
+    </SwipeNav>
   );
 }
