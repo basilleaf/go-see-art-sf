@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { museums } from "@/db/schema";
 import { sql } from "drizzle-orm";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,15 @@ export default async function AboutPage() {
           </li>
         ))}
       </ul>
+
+      <div className="mt-12 pt-8 border-t border-border">
+        <Link
+          href="/contact"
+          className="text-sm text-muted hover:text-foreground transition-colors"
+        >
+          Get in touch →
+        </Link>
+      </div>
     </div>
   );
 }
