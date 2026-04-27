@@ -72,9 +72,6 @@ export default async function ExhibitionPage({
         <h1 className="text-3xl font-semibold tracking-tight leading-tight mb-2">
           {ex.title}
         </h1>
-        {ex.artist && (
-          <p className="text-lg text-muted">{ex.artist}</p>
-        )}
       </div>
 
       <div className="flex items-center gap-2 mb-8">

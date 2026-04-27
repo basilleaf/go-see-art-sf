@@ -57,9 +57,6 @@ export default async function Home() {
               <h2 className="font-semibold text-base leading-snug group-hover:text-pink transition-colors">
                 {ex.title}
               </h2>
-              {ex.artist && (
-                <p className="text-sm text-muted mt-0.5">{ex.artist}</p>
-              )}
             </div>
           </Link>
         ))}
