@@ -11,6 +11,13 @@ Auto-updating feed of current art exhibitions across select San Francisco museum
 
 https://go-see-art-sf-11o7.vercel.app/
 
+run all scrapers:
+npx tsx --env-file=.env scripts/run-all-scrapers.ts
+
+Run one scraper:
+npx tsx --env-file=.env scripts/scrapers/<museum>/index.ts
+
+
 <img width="3420" height="2140" alt="image" src="https://github.com/user-attachments/assets/91c7711f-57ef-486c-899e-6f10a27d7631" />
 
 detail page: 

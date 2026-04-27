@@ -4,6 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
+import { summarizeIfMissing, upsertSet } from "../summarize";
 
 const BASE_URL = "https://fortmason.org";
 const LIST_URL = `${BASE_URL}/arts/`;
@@ -143,14 +144,21 @@ async function main() {
   for (const { href, slug, startDate, endDate } of items) {
     console.log(`  Fetching ${href}`);
     try {
-      const { title, image, description } = await scrapeDetail(href, slug);
+      const { title, image, description: rawDescription } = await scrapeDetail(href, slug);
+      const description = await summarizeIfMissing(href, {
+        rawDescription,
+        title,
+        museumName: museum.name,
+        startDate,
+        endDate,
+      });
       console.log(`  → "${title}" | ${startDate ?? "ongoing"} – ${endDate ?? ""}`);
       await db.insert(exhibitions).values({
         title, image, description,
         startDate, endDate,
         imageCredit: null, artist: null,
         link: href, museumId,
-      }).onConflictDoNothing();
+      }).onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${href}:`, err);
     }

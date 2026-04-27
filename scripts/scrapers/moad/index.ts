@@ -4,6 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
+import { summarizeIfMissing, upsertSet } from "../summarize";
 
 const BASE_URL = "https://www.moadsf.org";
 const HEADERS = {
@@ -149,13 +150,22 @@ async function main() {
   // Scrape each and insert
   for (const exhibitionPath of links) {
     try {
-      const data = await scrapeExhibitionDetail(exhibitionPath, MUSEUM_DIR);
+      const rawData = await scrapeExhibitionDetail(exhibitionPath, MUSEUM_DIR);
+      const description = await summarizeIfMissing(rawData.link, {
+        rawDescription: rawData.description,
+        title: rawData.title,
+        artist: rawData.artist,
+        museumName: museum.name,
+        startDate: rawData.startDate,
+        endDate: rawData.endDate,
+      });
+      const data = { ...rawData, description };
       console.log(`  → "${data.title}" | artist: ${data.artist} | ${data.startDate} – ${data.endDate}`);
 
       await db
         .insert(exhibitions)
         .values({ ...data, museumId })
-        .onConflictDoNothing(); // unique constraint on link
+        .onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${exhibitionPath}:`, err);
     }

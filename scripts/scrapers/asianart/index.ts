@@ -4,6 +4,7 @@ import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
+import { summarizeIfMissing, upsertSet } from "../summarize";
 
 const BASE_URL = "https://exhibitions.asianart.org";
 const LIST_URL = BASE_URL + "/";
@@ -122,9 +123,19 @@ async function main() {
 
   for (const href of links) {
     try {
-      const data = await scrapeExhibitionDetail(href);
+      const rawData = await scrapeExhibitionDetail(href);
+      const description = await summarizeIfMissing(href, {
+        rawDescription: rawData.description,
+        title: rawData.title,
+        artist: rawData.artist,
+        museumName: museum.name,
+        startDate: rawData.startDate,
+        endDate: rawData.endDate,
+      });
+      const data = { ...rawData, description };
       console.log(`  → "${data.title}" | ${data.startDate ?? "?"} – ${data.endDate ?? "?"}`);
-      await db.insert(exhibitions).values({ ...data, museumId }).onConflictDoNothing();
+      await db.insert(exhibitions).values({ ...data, museumId })
+        .onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {
       console.error(`  ERROR on ${href}:`, err);
     }
