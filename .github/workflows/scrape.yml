@@ -18,17 +18,18 @@ jobs:
 
       - run: npm ci
 
-      - run: npx tsx scripts/run-all-scrapers.ts
+      - name: Run scrapers (capture output)
+        run: npx tsx scripts/run-all-scrapers.ts 2>&1 | tee /tmp/scraper-output.txt
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-      - run: npx tsx scripts/run-all-scrapers.ts 2>&1 | tee /tmp/scraper-output.txt
+      - name: Generate HTML report
+        if: always()
+        run: npx tsx scripts/generate-report.ts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Send summary email
         if: always()
@@ -37,14 +38,17 @@ jobs:
           const fs = require('fs');
           const { Resend } = require('resend');
           const r = new Resend(process.env.RESEND_API_KEY);
-          const logs = fs.existsSync('/tmp/scraper-output.txt')
-            ? fs.readFileSync('/tmp/scraper-output.txt', 'utf8')
-            : 'No output captured.';
+          const html = fs.existsSync('/tmp/scraper-report.html')
+            ? fs.readFileSync('/tmp/scraper-report.html', 'utf8')
+            : '<pre>' + (fs.existsSync('/tmp/scraper-output.txt') ? fs.readFileSync('/tmp/scraper-output.txt', 'utf8') : 'No output.') + '</pre>';
+          const subject = fs.existsSync('/tmp/scraper-subject.txt')
+            ? fs.readFileSync('/tmp/scraper-subject.txt', 'utf8').trim()
+            : 'Scraper run: ' + process.env.JOB_STATUS;
           r.emails.send({
             from: 'Go See Art SF <hello@goseeartsf.com>',
             to: 'lballard.cat@gmail.com',
-            subject: 'Scraper run: ' + process.env.JOB_STATUS,
-            text: logs,
+            subject,
+            html,
           }).then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
           "
         env:
