@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
 import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
+import { museumSlugForInsert } from "@/lib/museumSlug";
 
 const BASE_URL = "https://www.moadsf.org";
 const HEADERS = {
@@ -123,12 +124,14 @@ async function main() {
     where: eq(museums.homepageUrl, "https://www.moadsf.org"),
   });
   if (!museum) {
+    const musSlug = await museumSlugForInsert(db, "Museum of the African Diaspora");
     [museum] = await db
       .insert(museums)
       .values({
         name: "Museum of the African Diaspora",
         homepageUrl: "https://www.moadsf.org",
         exhibitionsPageUrl: "https://www.moadsf.org/exhibitions",
+        slug: musSlug,
       })
       .returning();
     console.log(`Inserted museum id=${museum.id}`);
@@ -167,7 +170,7 @@ async function main() {
       const data = { ...rawData, description, artist, imageCredit: rawData.imageCredit ?? artist };
       console.log(`  → "${data.title}" | artist: ${data.artist} | ${data.startDate} – ${data.endDate}`);
 
-      const slug = await slugForExhibitionUpsert(data.link!, data.title, museum.name);
+      const slug = await slugForExhibitionUpsert(data.link!, data.title, museumId);
       await db
         .insert(exhibitions)
         .values({ ...data, museumId, slug })

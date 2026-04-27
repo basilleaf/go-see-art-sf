@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
 import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
+import { museumSlugForInsert } from "@/lib/museumSlug";
 
 const BASE_URL = "https://www.famsf.org";
 const LIST_URL = `${BASE_URL}/exhibitions?where=de-young`;
@@ -125,12 +126,14 @@ async function main() {
     where: eq(museums.homepageUrl, "https://www.famsf.org/visit/de-young"),
   });
   if (!museum) {
+    const musSlug = await museumSlugForInsert(db, "de Young Museum");
     [museum] = await db
       .insert(museums)
       .values({
         name: "de Young Museum",
         homepageUrl: "https://www.famsf.org/visit/de-young",
         exhibitionsPageUrl: LIST_URL,
+        slug: musSlug,
       })
       .returning();
     console.log(`Inserted museum id=${museum.id}`);
@@ -164,7 +167,7 @@ async function main() {
       const artist = rawData.artist ?? inferredArtist;
       const data = { ...rawData, description, artist, imageCredit: rawData.imageCredit ?? artist };
       console.log(`  → "${data.title}" | ${data.startDate ?? "?"} – ${data.endDate ?? "?"}`);
-      const slug = await slugForExhibitionUpsert(data.link!, data.title, museum.name);
+      const slug = await slugForExhibitionUpsert(data.link!, data.title, museumId);
       await db.insert(exhibitions).values({ ...data, museumId, slug })
         .onConflictDoUpdate({ target: exhibitions.link, set: upsertSet });
     } catch (err) {

@@ -1,35 +1,16 @@
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { exhibitions } from "@/db/schema";
+import { exhibitionSlugFromTitle } from "@/lib/slugify";
 
 type AppDb = typeof db;
 
-const MAX_SLUG_LEN = 200;
-
 /**
- * Strips diacritics, lowercases, and replaces non-alphanumeric runs with a single hyphen.
- */
-export function slugifySegment(s: string): string {
-  const out = s
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .replace(/-+/g, "-");
-  return (out.slice(0, MAX_SLUG_LEN) || "exhibition").replace(/-+$/, "");
-}
-
-/** Public exhibition URL path segment from title and museum (readable + usually unique). */
-export function exhibitionPathSlugFromParts(title: string, museumName: string): string {
-  return slugifySegment(`${title} ${museumName}`);
-}
-
-/**
- * Picks a unique value for `exhibitions.slug` by appending -2, -3, ... if needed.
+ * Picks a unique `exhibitions.slug` for this museum (append -2, -3, …).
  */
 export async function allocateUniqueExhibitionSlug(
   database: AppDb,
+  museumId: number,
   base: string
 ): Promise<string> {
   let candidate = base;
@@ -38,19 +19,19 @@ export async function allocateUniqueExhibitionSlug(
     const [row] = await database
       .select({ c: count() })
       .from(exhibitions)
-      .where(eq(exhibitions.slug, candidate));
+      .where(and(eq(exhibitions.museumId, museumId), eq(exhibitions.slug, candidate)));
     if (!row || row.c === 0) return candidate;
     n += 1;
     candidate = `${base}-${n}`;
   }
 }
 
-/** New exhibition row: unique slug from title + museum (collisions get -2, -3, …). */
+/** New exhibition: slug from title only; unique per museum. */
 export async function exhibitionSlugForInsert(
   database: AppDb,
-  title: string,
-  museumName: string
+  museumId: number,
+  title: string
 ): Promise<string> {
-  const base = exhibitionPathSlugFromParts(title, museumName);
-  return allocateUniqueExhibitionSlug(database, base);
+  const base = exhibitionSlugFromTitle(title);
+  return allocateUniqueExhibitionSlug(database, museumId, base);
 }

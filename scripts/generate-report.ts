@@ -37,6 +37,7 @@ async function main() {
       link: exhibitions.link,
       createdAt: exhibitions.createdAt,
       museumName: museums.name,
+      museumSlug: museums.slug,
     })
     .from(exhibitions)
     .innerJoin(museums, eq(exhibitions.museumId, museums.id))
@@ -53,6 +54,7 @@ async function main() {
       description: exhibitions.description,
       link: exhibitions.link,
       museumName: museums.name,
+      museumSlug: museums.slug,
     })
     .from(exhibitions)
     .innerJoin(museums, eq(exhibitions.museumId, museums.id))
@@ -126,7 +128,7 @@ ${newExhibitions
       ex.startDate || ex.endDate
         ? `${formatDate(ex.startDate)} – ${formatDate(ex.endDate)}`
         : "dates unknown";
-    const siteUrl = `${SITE_URL}/exhibitions/${ex.slug}`;
+    const siteUrl = `${SITE_URL}/exhibitions/${ex.museumSlug}/${ex.slug}`;
     return `
 <div style="border:1px solid #ddd;border-radius:6px;padding:16px;margin-bottom:16px;">
   <p style="margin:0 0 4px;font-size:18px;font-weight:bold;">
@@ -161,7 +163,7 @@ ${newExhibitions
   <tbody>
     ${missingContent
       .map((ex) => {
-        const siteUrl = `${SITE_URL}/exhibitions/${ex.slug}`;
+        const siteUrl = `${SITE_URL}/exhibitions/${ex.museumSlug}/${ex.slug}`;
         return `
     <tr>
       <td style="padding:6px 8px;border-bottom:1px solid #eee;"><a href="${esc(siteUrl)}" style="color:#1a0dab;">${esc(ex.title)}</a></td>

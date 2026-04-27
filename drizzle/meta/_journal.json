@@ -29,6 +29,13 @@
       "when": 1777325088351,
       "tag": "0003_exhibition_slugs",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777326085407,
+      "tag": "0004_exhibition_nested_slugs",
+      "breakpoints": true
     }
   ]
 }

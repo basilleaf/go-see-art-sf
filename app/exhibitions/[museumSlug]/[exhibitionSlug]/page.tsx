@@ -17,29 +17,35 @@ function siteUrl() {
   return "http://localhost:3000";
 }
 
+function exhibitionPath(museumSlug: string, exSlug: string) {
+  return `/exhibitions/${museumSlug}/${exSlug}`;
+}
+
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ museumSlug: string; exhibitionSlug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { museumSlug, exhibitionSlug } = await params;
   const rows = await db
     .select()
     .from(exhibitions)
-    .leftJoin(museums, eq(exhibitions.museumId, museums.id))
-    .where(eq(exhibitions.slug, slug))
+    .innerJoin(museums, eq(exhibitions.museumId, museums.id))
+    .where(
+      and(eq(museums.slug, museumSlug), eq(exhibitions.slug, exhibitionSlug))
+    )
     .limit(1);
 
   if (!rows.length) return {};
 
   const { exhibitions: ex, museums: museum } = rows[0];
 
-  const title = museum?.name ? `${ex.title} — ${museum.name}` : ex.title;
-  const rawDesc = ex.description ?? museum?.name ?? "";
+  const title = museum.name ? `${ex.title} — ${museum.name}` : ex.title;
+  const rawDesc = ex.description ?? museum.name ?? "";
   const description = rawDesc.length > 200
     ? rawDesc.slice(0, 200).trimEnd() + "…"
     : rawDesc || "View this exhibition on Go See Art SF";
-  const url = `${siteUrl()}/exhibitions/${ex.slug}`;
+  const url = `${siteUrl()}${exhibitionPath(museum.slug, ex.slug)}`;
 
   return {
     title,
@@ -82,15 +88,17 @@ function formatDateRange(startDate: string | null, endDate: string | null) {
 export default async function ExhibitionPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ museumSlug: string; exhibitionSlug: string }>;
 }) {
-  const { slug } = await params;
+  const { museumSlug, exhibitionSlug } = await params;
 
   const rows = await db
     .select()
     .from(exhibitions)
-    .leftJoin(museums, eq(exhibitions.museumId, museums.id))
-    .where(eq(exhibitions.slug, slug))
+    .innerJoin(museums, eq(exhibitions.museumId, museums.id))
+    .where(
+      and(eq(museums.slug, museumSlug), eq(exhibitions.slug, exhibitionSlug))
+    )
     .limit(1);
 
   if (!rows.length) notFound();
@@ -101,11 +109,13 @@ export default async function ExhibitionPage({
   const allVisible = await db
     .select({
       id: exhibitions.id,
-      slug: exhibitions.slug,
+      exSlug: exhibitions.slug,
+      museumSlug: museums.slug,
       startDate: exhibitions.startDate,
       endDate: exhibitions.endDate,
     })
     .from(exhibitions)
+    .innerJoin(museums, eq(exhibitions.museumId, museums.id))
     .where(
       and(
         eq(exhibitions.hidden, false),
@@ -116,12 +126,24 @@ export default async function ExhibitionPage({
 
   const sorted = sortExhibitions(allVisible, today);
   const currentIndex = sorted.findIndex((row) => row.id === ex.id);
-  const prevSlug = currentIndex > 0 ? sorted[currentIndex - 1].slug : null;
-  const nextSlug = currentIndex < sorted.length - 1 ? sorted[currentIndex + 1].slug : null;
+  const prevPath =
+    currentIndex > 0
+      ? exhibitionPath(
+          sorted[currentIndex - 1].museumSlug,
+          sorted[currentIndex - 1].exSlug
+        )
+      : null;
+  const nextPath =
+    currentIndex < sorted.length - 1
+      ? exhibitionPath(
+          sorted[currentIndex + 1].museumSlug,
+          sorted[currentIndex + 1].exSlug
+        )
+      : null;
   const dateLabel = formatDateRange(ex.startDate, ex.endDate);
 
   return (
-    <SwipeNav prevSlug={prevSlug} nextSlug={nextSlug}>
+    <SwipeNav prevPath={prevPath} nextPath={nextPath}>
     <div className="max-w-3xl mx-auto px-6 py-12">
       <Link href="/" className="text-sm text-muted hover:text-pink transition-colors mb-8 inline-block">
         ← All exhibitions
@@ -146,7 +168,7 @@ export default async function ExhibitionPage({
 
       <div className="mb-6">
         <p className="text-xs uppercase tracking-widest text-muted mb-2">
-          {museum?.name}
+          {museum.name}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight leading-tight mb-2">
           {ex.title}
@@ -179,12 +201,12 @@ export default async function ExhibitionPage({
         </a>
       )}
 
-      {(prevSlug !== null || nextSlug !== null) && (
+      {(prevPath !== null || nextPath !== null) && (
         <div className="flex justify-between mt-12 pt-8 border-t border-border">
           <div>
-            {prevSlug !== null && (
+            {prevPath !== null && (
               <Link
-                href={`/exhibitions/${prevSlug}`}
+                href={prevPath}
                 className="text-sm text-muted hover:text-pink transition-colors"
               >
                 ← Previous
@@ -192,9 +214,9 @@ export default async function ExhibitionPage({
             )}
           </div>
           <div>
-            {nextSlug !== null && (
+            {nextPath !== null && (
               <Link
-                href={`/exhibitions/${nextSlug}`}
+                href={nextPath}
                 className="text-sm text-muted hover:text-pink transition-colors"
               >
                 Next →

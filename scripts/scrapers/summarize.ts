@@ -127,8 +127,8 @@ export const upsertSet = {
   slug: sql`exhibitions.slug`,
 };
 
-/** For scraper insert/upsert on `exhibitions.link`. New row: unique slug from title. Existing row: same slug (title changes do not retarget the URL). */
-export async function slugForExhibitionUpsert(link: string, title: string, museumName: string) {
+/** For scraper insert/upsert on `exhibitions.link`. New row: slug from title, unique per museum. Existing row: same slug. */
+export async function slugForExhibitionUpsert(link: string, title: string, museumId: number) {
   const existing = await db.query.exhibitions.findFirst({
     where: eq(exhibitions.link, link),
     columns: { slug: true },
@@ -136,5 +136,5 @@ export async function slugForExhibitionUpsert(link: string, title: string, museu
   if (existing) {
     return existing.slug;
   }
-  return exhibitionSlugForInsert(db, title, museumName);
+  return exhibitionSlugForInsert(db, museumId, title);
 }

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
 import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
+import { museumSlugForInsert } from "@/lib/museumSlug";
 
 const BASE_URL = "https://iamasf.org";
 const MUSEUM_DIR = "iama";
@@ -112,12 +113,14 @@ async function main() {
     where: eq(museums.homepageUrl, BASE_URL),
   });
   if (!museum) {
+    const musSlug = await museumSlugForInsert(db, "International Art Museum of America");
     [museum] = await db
       .insert(museums)
       .values({
         name: "International Art Museum of America",
         homepageUrl: BASE_URL,
         exhibitionsPageUrl: `${BASE_URL}/art/exhibitions/`,
+        slug: musSlug,
       })
       .returning();
     console.log(`Inserted museum id=${museum.id}`);
@@ -149,7 +152,7 @@ async function main() {
         }),
       ]);
       console.log(`  → "${title}" | ${startDate ?? "permanent"} – ${endDate ?? ""}`);
-      const pathSlug = await slugForExhibitionUpsert(href, title, museum.name);
+      const pathSlug = await slugForExhibitionUpsert(href, title, museumId);
       await db.insert(exhibitions).values({
         title, image, description, startDate, endDate,
         imageCredit: inferredArtist, artist: inferredArtist, link: href, museumId, slug: pathSlug,

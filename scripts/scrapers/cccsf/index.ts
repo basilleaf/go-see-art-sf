@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
 import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
+import { museumSlugForInsert } from "@/lib/museumSlug";
 
 const BASE_URL = "https://www.cccsf.us";
 const LIST_URL = `${BASE_URL}/current-exhibitions`;
@@ -88,12 +89,14 @@ async function main() {
     where: eq(museums.homepageUrl, BASE_URL),
   });
   if (!museum) {
+    const musSlug = await museumSlugForInsert(db, "Chinese Culture Center of San Francisco");
     [museum] = await db
       .insert(museums)
       .values({
         name: "Chinese Culture Center of San Francisco",
         homepageUrl: BASE_URL,
         exhibitionsPageUrl: LIST_URL,
+        slug: musSlug,
       })
       .returning();
     console.log(`Inserted museum id=${museum.id}`);
@@ -159,7 +162,7 @@ async function main() {
 
     console.log(`  → "${title}" | ${startDate ?? "?"} – ${endDate ?? "?"}`);
 
-    const pathSlug = await slugForExhibitionUpsert(link, title, museum.name);
+    const pathSlug = await slugForExhibitionUpsert(link, title, museumId);
     await db.insert(exhibitions).values({
       title,
       link,

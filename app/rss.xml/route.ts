@@ -37,7 +37,9 @@ export async function GET() {
   const items = rows
     .map(({ exhibitions: ex, museums: museum }) => {
       const pubDate = (ex.createdAt ?? new Date()).toUTCString();
-      const link = `${siteUrl}/exhibitions/${ex.slug}`;
+      const mSlug = museum?.slug;
+      if (!mSlug) return null;
+      const link = `${siteUrl}/exhibitions/${mSlug}/${ex.slug}`;
       const title = escapeXml(ex.title);
       const museumName = museum?.name ? museum.name : "";
 
@@ -72,6 +74,7 @@ export async function GET() {
 ${mediaContent}
     </item>`;
     })
+    .filter((x): x is string => x !== null)
     .join("\n");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
