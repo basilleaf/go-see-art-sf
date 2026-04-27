@@ -6,10 +6,19 @@ export const dynamic = "force-dynamic";
 import { exhibitions, museums } from "@/db/schema";
 import { and, eq, gte, or, isNull } from "drizzle-orm";
 
+function formatComingDate(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const monthName = date.toLocaleString("en-US", { month: "short" });
+  const d = date.getDate();
+  const suffix = d === 1 || d === 21 || d === 31 ? "st" : d === 2 || d === 22 ? "nd" : d === 3 || d === 23 ? "rd" : "th";
+  return `${monthName} ${d}${suffix}`;
+}
+
 export default async function Home() {
   const today = new Date().toISOString().slice(0, 10);
   const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const rows = await db
+  const rawRows = await db
     .select()
     .from(exhibitions)
     .leftJoin(museums, eq(exhibitions.museumId, museums.id))
@@ -18,8 +27,22 @@ export default async function Home() {
         eq(exhibitions.hidden, false),
         or(isNull(exhibitions.endDate), gte(exhibitions.endDate, today)),
       )
-    )
-    .orderBy(exhibitions.endDate, exhibitions.createdAt);
+    );
+
+  const current = rawRows
+    .filter(({ exhibitions: ex }) => !ex.startDate || ex.startDate <= today)
+    .sort((a, b) => {
+      if (!a.exhibitions.endDate && !b.exhibitions.endDate) return 0;
+      if (!a.exhibitions.endDate) return 1;
+      if (!b.exhibitions.endDate) return -1;
+      return a.exhibitions.endDate.localeCompare(b.exhibitions.endDate);
+    });
+
+  const upcoming = rawRows
+    .filter(({ exhibitions: ex }) => ex.startDate && ex.startDate > today)
+    .sort((a, b) => a.exhibitions.startDate!.localeCompare(b.exhibitions.startDate!));
+
+  const rows = [...current, ...upcoming];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
@@ -56,11 +79,15 @@ export default async function Home() {
                 <p className="text-xs uppercase tracking-widest text-muted">
                   {museum?.name}
                 </p>
-                {ex.endDate && ex.endDate <= twoWeeksOut && (
+                {ex.startDate && ex.startDate > today ? (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-sm whitespace-nowrap">
+                    Coming {formatComingDate(ex.startDate)}
+                  </span>
+                ) : ex.endDate && ex.endDate <= twoWeeksOut ? (
                   <span className="text-[10px] font-semibold uppercase tracking-wider bg-pink/10 text-pink px-1.5 py-0.5 rounded-sm whitespace-nowrap">
                     Ending soon
                   </span>
-                )}
+                ) : null}
               </div>
               <h2 className="font-semibold text-base leading-snug group-hover:text-pink transition-colors">
                 {ex.title}
