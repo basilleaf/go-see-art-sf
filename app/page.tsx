@@ -66,7 +66,7 @@ export default async function Home() {
             href={museum ? `/exhibitions/${museum.slug}/${ex.slug}` : "#"}
             className="group block"
           >
-            <div className="overflow-hidden bg-border aspect-[4/3] w-full mb-3">
+            <div className="relative overflow-hidden bg-border aspect-[4/3] w-full mb-3">
               {ex.image ? (
                 <Image
                   src={ex.image}
@@ -79,6 +79,11 @@ export default async function Home() {
               ) : (
                 <div className="w-full h-full bg-[#f0f0f0] flex items-center justify-center">
                   <span className="text-muted text-sm">No image</span>
+                </div>
+              )}
+              {ex.imageCredit && (
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                  <p className="text-white text-xs px-3 py-2">{ex.imageCredit}</p>
                 </div>
               )}
             </div>
