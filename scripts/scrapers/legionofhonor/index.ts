@@ -2,6 +2,7 @@ import path from "path";
 import { put } from "@vercel/blob";
 import { parse } from "node-html-parser";
 import { eq } from "drizzle-orm";
+import { playwrightFetchHtml, closeBrowser } from "../playwrightFetch";
 import { db } from "@/db";
 import { museums, exhibitions } from "@/db/schema";
 import { summarizeIfMissing, inferArtistIfMissing, upsertSet, uploadImageIfMissing, slugForExhibitionUpsert } from "../summarize";
@@ -11,11 +12,15 @@ const BASE_URL = "https://www.famsf.org";
 const LIST_URL = `${BASE_URL}/exhibitions?where=legion-of-honor`;
 const MUSEUM_DIR = "legionofhonor";
 const HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
   "Accept-Encoding": "gzip, deflate, br",
   "Cache-Control": "max-age=0",
+  "Connection": "keep-alive",
+  "sec-ch-ua": '"Chromium";v="136", "Google Chrome";v="136", "Not-A.Brand";v="24"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"macOS"',
   "Sec-Fetch-Dest": "document",
   "Sec-Fetch-Mode": "navigate",
   "Sec-Fetch-Site": "none",
@@ -24,9 +29,7 @@ const HEADERS = {
 };
 
 async function fetchHtml(url: string) {
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`${res.status} ${url}`);
-  return parse(await res.text());
+  return playwrightFetchHtml(url);
 }
 
 function parseDate(text: string): string | null {
@@ -184,6 +187,7 @@ async function main() {
   }
 
   console.log("\nDone.");
+  await closeBrowser();
 }
 
 main().catch(console.error);

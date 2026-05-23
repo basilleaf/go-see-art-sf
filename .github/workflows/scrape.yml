@@ -18,6 +18,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
       - name: Record run start time
         run: date -u +%Y-%m-%dT%H:%M:%SZ > /tmp/scraper-run-start.txt
 
