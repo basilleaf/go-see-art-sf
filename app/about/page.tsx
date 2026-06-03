@@ -5,6 +5,12 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "SF Art Museums",
+  description:
+    "Browse the San Francisco museums tracked by Go See Art SF, including SFMOMA, de Young, the Legion of Honor, and more.",
+};
+
 export default async function AboutPage() {
   const rows = await db
     .select()

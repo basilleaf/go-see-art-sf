@@ -142,8 +142,34 @@ export default async function ExhibitionPage({
       : null;
   const dateLabel = formatDateRange(ex.startDate, ex.endDate);
 
+  const url = `${siteUrl()}${exhibitionPath(museum.slug, ex.slug)}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ExhibitionEvent",
+    name: ex.title,
+    description: ex.description ?? undefined,
+    image: ex.image ?? undefined,
+    url,
+    ...(ex.startDate && { startDate: ex.startDate }),
+    ...(ex.endDate && { endDate: ex.endDate }),
+    location: {
+      "@type": "Museum",
+      name: museum.name,
+      url: museum.homepageUrl,
+    },
+    organizer: {
+      "@type": "Museum",
+      name: museum.name,
+      url: museum.homepageUrl,
+    },
+  };
+
   return (
     <SwipeNav prevPath={prevPath} nextPath={nextPath}>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
     <div className="max-w-3xl mx-auto px-6 py-12">
       <Link href="/" className="text-sm text-muted hover:text-pink transition-colors mb-8 inline-block">
         ← All exhibitions

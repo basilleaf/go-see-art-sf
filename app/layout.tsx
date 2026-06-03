@@ -15,20 +15,32 @@ function siteUrl() {
   return "http://localhost:3000";
 }
 
+const DESCRIPTION =
+  "Discover current and upcoming art exhibitions at San Francisco museums, all in one place.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: "Go see art SF",
-  description: "Select San Francisco art museum exhibitions, all in one place",
+  title: {
+    default: "Go See Art SF",
+    template: "%s | Go See Art SF",
+  },
+  description: DESCRIPTION,
   openGraph: {
-    title: "Go see art SF",
-    description: "Select San Francisco art museum exhibitions, all in one place",
+    title: "Go See Art SF",
+    description: DESCRIPTION,
     siteName: "Go See Art SF",
     type: "website",
+    url: siteUrl(),
   },
   twitter: {
     card: "summary_large_image",
-    title: "Go see art SF",
-    description: "Select San Francisco art museum exhibitions, all in one place",
+    title: "Go See Art SF",
+    description: DESCRIPTION,
+  },
+  alternates: {
+    types: {
+      "application/rss+xml": "/rss.xml",
+    },
   },
 };
 
@@ -40,6 +52,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Go See Art SF",
+              description: DESCRIPTION,
+              url: siteUrl(),
+            }),
+          }}
+        />
         <header className="border-b border-border sticky top-0 bg-white z-10">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center">
             <Link

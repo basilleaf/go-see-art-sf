@@ -1,7 +1,9 @@
 import ContactForm from "./ContactForm";
 
 export const metadata = {
-  title: "Contact — Go see art SF",
+  title: "Contact",
+  description:
+    "Have a suggestion, found something missing, or just want to say hi? Get in touch with Go See Art SF.",
 };
 
 export default function ContactPage() {
