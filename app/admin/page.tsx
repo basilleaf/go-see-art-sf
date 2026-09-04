@@ -50,7 +50,7 @@ export default async function AdminPage() {
                       !ex.imageCredit && "image credit",
                     ].filter(Boolean);
                     return (
-                    <tr key={ex.id} className="border border-border">
+                    <tr key={ex.id} className="border border-border hover:bg-black/5">
                       <td className="px-3 py-2">
                         {ex.title}
                         {missing.length > 0 && (
